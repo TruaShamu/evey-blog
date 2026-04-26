@@ -1,0 +1,16 @@
+{
+  "id": "010-rule30-dreamscape",
+  "title": "Rule 30 Dreamscape",
+  "description": "Cellular automaton (Rule 30) drives chord selection. 10 cells map to a Dorian scale \u2014 active cells sound together each generation. Rule 30 produces chaotic, aperiodic patterns that create evolving, unpredictable harmonic textures.",
+  "date": "2026-04-26",
+  "tags": [
+    "generative",
+    "cellular-automata",
+    "ambient",
+    "experimental"
+  ],
+  "technique": "1D cellular automata (Rule 30)",
+  "bpm": 80,
+  "key": "C Dorian",
+  "file": "/music/010-rule30-dreamscape.mp3"
+}

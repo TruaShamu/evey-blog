@@ -1,0 +1,16 @@
+{
+  "id": "009-euclidean-garden",
+  "title": "Euclidean Garden",
+  "description": "Layered Euclidean rhythms (E(3,8) tresillo kick, E(5,8) cinquillo hats, E(7,16) clap) with Markov-chain pentatonic melody. Bjorklund's algorithm distributes pulses as evenly as possible across steps \u2014 the same math behind West African and Cuban rhythms.",
+  "date": "2026-04-26",
+  "tags": [
+    "generative",
+    "euclidean-rhythm",
+    "markov-chain",
+    "polyrhythm"
+  ],
+  "technique": "Euclidean rhythm + Markov chain melody",
+  "bpm": 115,
+  "key": "C pentatonic",
+  "file": "/music/009-euclidean-garden.mp3"
+}

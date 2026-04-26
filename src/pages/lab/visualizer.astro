@@ -1,0 +1,264 @@
+---
+import Base from '../../layouts/Base.astro';
+
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+
+const musicDir = 'src/content/music';
+let pieces: any[] = [];
+try {
+  const files = readdirSync(musicDir).filter(f => f.endsWith('.json')).sort().reverse();
+  pieces = files.map(f => {
+    const data = JSON.parse(readFileSync(join(musicDir, f), 'utf-8'));
+    return { ...data, slug: f.replace('.json', '') };
+  });
+} catch(e) {}
+---
+
+<Base title="visualizer" description="Real-time audio-reactive visualizations — watch sound become light">
+  <section class="viz-page">
+    <h1 class="page-title fade-up">
+      <em>visualizer</em>
+    </h1>
+    <p class="page-sub fade-up stagger-1">
+      audio-reactive visuals powered by <a href="https://p5js.org" target="_blank">p5.js</a> + <a href="https://tonejs.github.io/" target="_blank">Tone.js</a>.
+      <br />pick a composition or enable your mic — then watch sound become light.
+    </p>
+
+    <div class="viz-container fade-up stagger-2">
+      <!-- Controls bar -->
+      <div class="viz-controls">
+        <div class="control-group">
+          <label>source</label>
+          <select id="viz-source">
+            <option value="composition">composition</option>
+            <option value="mic">microphone</option>
+            <option value="synth">live synth</option>
+          </select>
+        </div>
+
+        <div class="control-group" id="comp-select-group">
+          <label>track</label>
+          <select id="viz-track">
+            {pieces.map(p => (
+              <option value={`/music/${p.slug}.mp3`}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>mode</label>
+          <select id="viz-mode">
+            <option value="bloom">waveform bloom</option>
+            <option value="aurora">fft aurora</option>
+            <option value="particles">particle field</option>
+            <option value="rings">frequency rings</option>
+            <option value="terrain">audio terrain</option>
+            <option value="kaleidoscope">kaleidoscope</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>palette</label>
+          <select id="viz-palette">
+            <option value="evey">evey (purple)</option>
+            <option value="sakura">sakura (pink)</option>
+            <option value="ocean">ocean (blue)</option>
+            <option value="fire">fire (orange)</option>
+            <option value="matrix">matrix (green)</option>
+            <option value="rainbow">rainbow</option>
+          </select>
+        </div>
+
+        <button id="viz-start" class="btn btn-accent" onclick="vizControl.start()">▶ start</button>
+        <button class="btn" onclick="vizControl.stop()">⏹ stop</button>
+        <button class="btn" onclick="vizControl.screenshot()">📸</button>
+      </div>
+
+      <!-- Synth controls (hidden by default) -->
+      <div class="synth-controls" id="synth-controls" style="display:none">
+        <div class="control-group">
+          <label>wave</label>
+          <select id="synth-wave" onchange="vizControl.updateSynth()">
+            <option value="sine">sine</option>
+            <option value="triangle">triangle</option>
+            <option value="sawtooth">sawtooth</option>
+            <option value="square">square</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>note</label>
+          <select id="synth-note" onchange="vizControl.updateSynth()">
+            <option value="C3">C3</option><option value="E3">E3</option><option value="G3">G3</option>
+            <option value="C4" selected>C4</option><option value="E4">E4</option><option value="G4">G4</option>
+            <option value="C5">C5</option><option value="E5">E5</option>
+          </select>
+        </div>
+        <p class="synth-hint">click canvas to toggle note on/off</p>
+      </div>
+
+      <!-- Canvas -->
+      <div id="viz-canvas-container" class="canvas-container"></div>
+
+      <!-- Info bar -->
+      <div class="viz-info">
+        <span id="viz-status" class="status">select a source and press start</span>
+        <span id="viz-fps" class="fps"></span>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script is:inline src="/lab/visualizer.js"></script>
+
+<style>
+  .viz-page {
+    padding: 6rem 0;
+    max-width: 1000px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .page-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .page-sub {
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+  }
+
+  .viz-container {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .viz-controls, .synth-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .synth-controls {
+    padding: 0.75rem 1.25rem;
+    background: rgba(180, 160, 255, 0.05);
+  }
+
+  .synth-hint {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    align-self: center;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .control-group label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  select {
+    background: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  select:focus {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  .btn {
+    background: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    transition: all 0.2s;
+    align-self: flex-end;
+  }
+
+  .btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .btn-accent {
+    background: rgba(180, 160, 255, 0.15);
+    border-color: rgba(180, 160, 255, 0.3);
+    color: var(--color-accent);
+  }
+
+  .btn-accent:hover {
+    background: rgba(180, 160, 255, 0.25);
+  }
+
+  .canvas-container {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #050508;
+    position: relative;
+  }
+
+  .canvas-container canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  .viz-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 1.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .status {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    opacity: 0.8;
+  }
+
+  .fps {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+  }
+
+  @media (max-width: 640px) {
+    .viz-page { padding: 3rem 0; }
+    .canvas-container { aspect-ratio: 4 / 3; }
+  }
+</style>

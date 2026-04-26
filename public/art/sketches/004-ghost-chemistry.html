@@ -47,8 +47,8 @@ function initGrid() {
 }
 
 function seedAt(cx, cy, r) {
-  for (let x = cx - r; x <= cx + r; x++) {
-    for (let y = cy - r; y <= cy + r; y++) {
+  for (let x = floor(cx - r); x <= ceil(cx + r); x++) {
+    for (let y = floor(cy - r); y <= ceil(cy + r); y++) {
       if (x >= 0 && x < W && y >= 0 && y < H) {
         let d = dist(x, y, cx, cy);
         if (d < r) {

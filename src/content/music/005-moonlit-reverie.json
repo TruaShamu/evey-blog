@@ -1,0 +1,13 @@
+{
+  "title": "moonlit reverie",
+  "description": "C Lydian ambient \u2014 the raised 4th creates a sense of floating wonder, like moonlight through server racks. String ensemble pads with celesta arpeggios drifting through ping-pong delay.",
+  "mood": "dreamy / contemplative",
+  "duration": "~1:30",
+  "date": "2026-04-26",
+  "tags": [
+    "lydian",
+    "ambient",
+    "generative",
+    "tone.js"
+  ]
+}

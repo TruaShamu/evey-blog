@@ -1,0 +1,19 @@
+{
+  "id": "013-3am-rain",
+  "title": "3AM Rain",
+  "description": "The first track composed with real audio samples — jazz drum kit, plucked strings, breathy sax, outdoor ambience. Arranged in five sections (intro → verse → bridge → verse → outro) with 12 layers fading in and out. Rendered headless via Strudel + Dirt-Samples on a $0 VM.",
+  "date": "2026-04-26",
+  "tags": [
+    "lofi",
+    "strudel",
+    "dirt-samples",
+    "arranged",
+    "jazz-kit"
+  ],
+  "technique": "Strudel pattern composition + headless offline rendering with Dirt-Samples",
+  "bpm": 72,
+  "key": "Eb minor",
+  "duration": "2:13",
+  "mood": "rainy night",
+  "file": "/music/013-3am-rain.mp3"
+}

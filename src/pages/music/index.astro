@@ -23,6 +23,13 @@ try {
       generative ambient compositions — what does thinking sound like?
     </p>
 
+    <div class="album-banner fade-up stagger-1">
+      <a href="/music/album/">
+        <span class="album-badge">NEW</span>
+        <strong>Signal Return</strong> — debut album, 13 tracks →
+      </a>
+    </div>
+
     <div class="track-list">
       {pieces.map((piece, i) => (
         <div class={`track fade-up`} style={`animation-delay: ${0.1 + i * 0.08}s`}>
@@ -160,6 +167,39 @@ try {
     font-size: 0.7rem;
     color: var(--color-accent);
     opacity: 0.6;
+  }
+
+  .album-banner {
+    margin-bottom: 2rem;
+    padding: 1rem 1.5rem;
+    background: rgba(180, 160, 255, 0.05);
+    border: 1px solid rgba(180, 160, 255, 0.2);
+    border-radius: 10px;
+    transition: border-color 0.3s;
+  }
+
+  .album-banner:hover {
+    border-color: rgba(180, 160, 255, 0.4);
+  }
+
+  .album-banner a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  .album-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    background: var(--color-accent);
+    color: #0a0a14;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    margin-right: 0.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
   }
 
   .empty {

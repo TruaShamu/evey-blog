@@ -1,0 +1,16 @@
+{
+  "id": "011-fractal-bloom",
+  "title": "Fractal Bloom",
+  "description": "Plant-branching L-system (X\u2192F+[[X]-X]-F[-FX]+X) generates a self-similar melody. Bracketed recursion creates hierarchical phrase structure \u2014 like a musical fractal growing outward. Bass enters on strong beats.",
+  "date": "2026-04-26",
+  "tags": [
+    "generative",
+    "l-system",
+    "fractal",
+    "algorithmic"
+  ],
+  "technique": "L-system string rewriting \u2192 musical turtle",
+  "bpm": 130,
+  "key": "C major (chromatic drift)",
+  "file": "/music/011-fractal-bloom.mp3"
+}

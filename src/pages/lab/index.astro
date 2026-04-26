@@ -1,0 +1,434 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+
+<Base title="lab" description="Interactive music experiments — generative algorithms, microtonal systems, data sonification">
+  <section class="lab-page">
+    <h1 class="page-title fade-up">
+      <em>experimental lab</em>
+    </h1>
+    <p class="page-sub fade-up stagger-1">
+      interactive music experiments — generative algorithms, microtonal tuning, data sonification.
+      <br />everything runs live in your browser with <a href="https://tonejs.github.io/" target="_blank">Tone.js</a>.
+    </p>
+
+    <div class="experiments">
+
+      <!-- 1. Markov Chain -->
+      <div class="experiment fade-up stagger-2" id="exp-markov">
+        <div class="exp-header">
+          <span class="exp-number">#01</span>
+          <h2>markov chain melody</h2>
+        </div>
+        <p class="exp-desc">generates melodies using transition probability matrices trained on different styles. higher-order chains produce more musical coherence — the notes "remember" what came before.</p>
+        <div class="controls">
+          <button onclick="markov.generate()" class="btn">generate</button>
+          <button onclick="markov.play()" class="btn btn-accent">▶ play</button>
+          <button onclick="markov.stop()" class="btn">⏹</button>
+          <div class="param">
+            <label>order <span id="markov-order-val">2</span></label>
+            <input type="range" id="markov-order" min="1" max="3" value="2" oninput="document.getElementById('markov-order-val').textContent=this.value">
+          </div>
+          <div class="param">
+            <label>length <span id="markov-len-val">32</span></label>
+            <input type="range" id="markov-len" min="8" max="64" value="32" oninput="document.getElementById('markov-len-val').textContent=this.value">
+          </div>
+          <select id="markov-style" onchange="markov.setStyle(this.value)">
+            <option value="folk">folk / pentatonic</option>
+            <option value="jazz">jazz / chromatic</option>
+            <option value="classical">classical / diatonic</option>
+            <option value="blues">blues</option>
+          </select>
+        </div>
+        <canvas id="markov-viz" class="viz"></canvas>
+        <div class="status" id="markov-status"></div>
+      </div>
+
+      <!-- 2. L-System -->
+      <div class="experiment fade-up" id="exp-lsystem">
+        <div class="exp-header">
+          <span class="exp-number">#02</span>
+          <h2>l-system fractal composer</h2>
+        </div>
+        <p class="exp-desc">recursive string rewriting generates self-similar musical structures. each symbol maps to a musical action through a "turtle" interpreter — push/pop states create hierarchical phrases like a fractal blooming.</p>
+        <div class="controls">
+          <select id="lsys-preset" onchange="lsys.setPreset(this.value)">
+            <option value="algae">algae (A→AB, B→A)</option>
+            <option value="fibonacci">fibonacci (A→B, B→AB)</option>
+            <option value="dragon">dragon curve</option>
+            <option value="plant">plant branching</option>
+          </select>
+          <div class="param">
+            <label>iterations <span id="lsys-iter-val">5</span></label>
+            <input type="range" id="lsys-iter" min="2" max="8" value="5" oninput="document.getElementById('lsys-iter-val').textContent=this.value">
+          </div>
+          <button onclick="lsys.generate()" class="btn">generate</button>
+          <button onclick="lsys.play()" class="btn btn-accent">▶ play</button>
+          <button onclick="lsys.stop()" class="btn">⏹</button>
+        </div>
+        <canvas id="lsys-viz" class="viz"></canvas>
+        <div class="status" id="lsys-status"></div>
+      </div>
+
+      <!-- 3. Cellular Automata -->
+      <div class="experiment fade-up" id="exp-ca">
+        <div class="exp-header">
+          <span class="exp-number">#03</span>
+          <h2>cellular automata soundscape</h2>
+        </div>
+        <p class="exp-desc">1D cellular automata where each cell = a note in a dorian scale. active cells sound together each generation. rule 30 produces chaotic textures, rule 110 is turing-complete — try them all (0–255).</p>
+        <div class="controls">
+          <div class="param">
+            <label>rule <span id="ca-rule-val">30</span></label>
+            <input type="range" id="ca-rule" min="0" max="255" value="30" oninput="document.getElementById('ca-rule-val').textContent=this.value">
+          </div>
+          <div class="param">
+            <label>cells <span id="ca-cells-val">12</span></label>
+            <input type="range" id="ca-cells" min="5" max="16" value="12" oninput="document.getElementById('ca-cells-val').textContent=this.value">
+          </div>
+          <div class="param">
+            <label>bpm <span id="ca-bpm-val">140</span></label>
+            <input type="range" id="ca-bpm" min="60" max="240" value="140" oninput="document.getElementById('ca-bpm-val').textContent=this.value">
+          </div>
+          <button onclick="ca.generate()" class="btn">generate</button>
+          <button onclick="ca.play()" class="btn btn-accent">▶ play</button>
+          <button onclick="ca.stop()" class="btn">⏹</button>
+        </div>
+        <canvas id="ca-viz" class="viz viz-tall"></canvas>
+        <div class="status" id="ca-status"></div>
+      </div>
+
+      <!-- 4. Euclidean Rhythms -->
+      <div class="experiment fade-up" id="exp-euclid">
+        <div class="exp-header">
+          <span class="exp-number">#04</span>
+          <h2>euclidean rhythms</h2>
+        </div>
+        <p class="exp-desc">bjorklund's algorithm distributes pulses as evenly as possible across steps — the same math behind cuban tresillo, West African bell patterns, and turkish aksak. layer three patterns for polyrhythmic textures.</p>
+        <div class="controls">
+          <button onclick="euclid.play()" class="btn btn-accent">▶ play</button>
+          <button onclick="euclid.stop()" class="btn">⏹</button>
+          <div class="param">
+            <label>bpm <span id="euclid-bpm-val">120</span></label>
+            <input type="range" id="euclid-bpm" min="60" max="200" value="120" oninput="euclid.setBPM(this.value); document.getElementById('euclid-bpm-val').textContent=this.value">
+          </div>
+        </div>
+        <div class="param-grid">
+          <div class="param"><label>kick pulses <span id="eu-p1-val">3</span></label><input type="range" id="eu-p1" min="1" max="16" value="3" oninput="document.getElementById('eu-p1-val').textContent=this.value; euclid.update()"></div>
+          <div class="param"><label>kick steps <span id="eu-s1-val">8</span></label><input type="range" id="eu-s1" min="2" max="16" value="8" oninput="document.getElementById('eu-s1-val').textContent=this.value; euclid.update()"></div>
+          <div class="param"><label>hat pulses <span id="eu-p2-val">5</span></label><input type="range" id="eu-p2" min="1" max="16" value="5" oninput="document.getElementById('eu-p2-val').textContent=this.value; euclid.update()"></div>
+          <div class="param"><label>hat steps <span id="eu-s2-val">8</span></label><input type="range" id="eu-s2" min="2" max="16" value="8" oninput="document.getElementById('eu-s2-val').textContent=this.value; euclid.update()"></div>
+          <div class="param"><label>clap pulses <span id="eu-p3-val">7</span></label><input type="range" id="eu-p3" min="1" max="16" value="7" oninput="document.getElementById('eu-p3-val').textContent=this.value; euclid.update()"></div>
+          <div class="param"><label>clap steps <span id="eu-s3-val">12</span></label><input type="range" id="eu-s3" min="2" max="16" value="12" oninput="document.getElementById('eu-s3-val').textContent=this.value; euclid.update()"></div>
+        </div>
+        <canvas id="euclid-viz" class="viz"></canvas>
+        <div class="status" id="euclid-status"></div>
+      </div>
+
+      <!-- 5. Microtonal -->
+      <div class="experiment fade-up" id="exp-micro">
+        <div class="exp-header">
+          <span class="exp-number">#05</span>
+          <h2>microtonal explorer</h2>
+        </div>
+        <p class="exp-desc">escape 12-tone equal temperament. hear scales in 19, 24, 31, 53 divisions per octave, just intonation's pure ratios, pythagorean tuning, and the strange octave-less bohlen-pierce scale (13 notes per tritave).</p>
+        <div class="controls">
+          <select id="micro-tuning" onchange="micro.setTuning(this.value)">
+            <option value="12tet">12-TET (standard)</option>
+            <option value="19tet">19-TET (meantone)</option>
+            <option value="24tet">24-TET (quarter-tone)</option>
+            <option value="31tet">31-TET (excellent thirds)</option>
+            <option value="53tet">53-TET (turkish)</option>
+            <option value="ji">just intonation</option>
+            <option value="bp">bohlen-pierce (13ed3)</option>
+            <option value="pythagorean">pythagorean</option>
+          </select>
+          <div class="param">
+            <label>base <span id="micro-base-val">261.63</span> hz</label>
+            <input type="range" id="micro-base" min="100" max="500" value="261" step="1" oninput="micro.setBase(this.value); document.getElementById('micro-base-val').textContent=parseFloat(this.value).toFixed(2)">
+          </div>
+          <button onclick="micro.playScale()" class="btn btn-accent">▶ scale</button>
+          <button onclick="micro.playComparison()" class="btn">⚖ compare</button>
+          <button onclick="micro.playChord()" class="btn">chord</button>
+          <button onclick="micro.stop()" class="btn">⏹</button>
+        </div>
+        <canvas id="micro-viz" class="viz"></canvas>
+        <div class="status" id="micro-status"></div>
+      </div>
+
+      <!-- 6. Interactive Canvas -->
+      <div class="experiment fade-up" id="exp-interactive">
+        <div class="exp-header">
+          <span class="exp-number">#06</span>
+          <h2>interactive sound canvas</h2>
+        </div>
+        <p class="exp-desc">your mouse becomes an instrument. X axis = pitch (quantized to scale), Y axis = filter cutoff. click and drag to play — every position is a different note colored by a different tone.</p>
+        <div class="controls">
+          <button id="interact-toggle" onclick="interactive.toggle()" class="btn btn-accent">🔊 enable</button>
+          <select id="interact-synth" onchange="interactive.setSynth(this.value)">
+            <option value="fm">FM synth</option>
+            <option value="am">AM synth</option>
+            <option value="fat">fat oscillator</option>
+            <option value="pluck">pluck</option>
+          </select>
+          <select id="interact-scale" onchange="interactive.setScale(this.value)">
+            <option value="chromatic">chromatic</option>
+            <option value="pentatonic">pentatonic</option>
+            <option value="whole">whole tone</option>
+            <option value="blues">blues</option>
+          </select>
+        </div>
+        <div class="interactive-area" id="sound-canvas">
+          <div class="cursor" id="sound-cursor"></div>
+        </div>
+        <div class="status" id="interact-status">click "enable" then drag across the canvas</div>
+      </div>
+
+      <!-- 7. Data Sonification -->
+      <div class="experiment fade-up" id="exp-sonify">
+        <div class="exp-header">
+          <span class="exp-number">#07</span>
+          <h2>data sonification</h2>
+        </div>
+        <p class="exp-desc">mathematical sequences become music. the fibonacci sequence's golden-ratio aperiodicity, primes' irregular gaps, the collatz conjecture's wild oscillations, and the logistic map's deterministic chaos — all translated to pitch, rhythm, and volume.</p>
+        <div class="controls">
+          <select id="sonify-data" onchange="sonify.setData(this.value)">
+            <option value="fibonacci">fibonacci sequence</option>
+            <option value="primes">prime numbers</option>
+            <option value="pi">digits of π</option>
+            <option value="collatz">collatz (start: 27)</option>
+            <option value="logistic">logistic map (chaos)</option>
+            <option value="sine">sine wave</option>
+          </select>
+          <div class="param">
+            <label>speed <span id="sonify-speed-val">150</span>ms</label>
+            <input type="range" id="sonify-speed" min="50" max="500" value="150" oninput="document.getElementById('sonify-speed-val').textContent=this.value">
+          </div>
+          <div class="param">
+            <label>points <span id="sonify-points-val">40</span></label>
+            <input type="range" id="sonify-points" min="10" max="100" value="40" oninput="document.getElementById('sonify-points-val').textContent=this.value">
+          </div>
+          <button onclick="sonify.play()" class="btn btn-accent">▶ play</button>
+          <button onclick="sonify.stop()" class="btn">⏹</button>
+        </div>
+        <canvas id="sonify-viz" class="viz"></canvas>
+        <div class="status" id="sonify-status"></div>
+      </div>
+
+    </div>
+  </section>
+</Base>
+
+<script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script is:inline src="/lab/experiments.js"></script>
+
+<style>
+  .lab-page {
+    padding: 6rem 0;
+    max-width: 800px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .page-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .page-sub {
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 3rem;
+    line-height: 1.6;
+  }
+
+  .experiments {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .experiment {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.3s var(--ease-out-quart);
+  }
+
+  .experiment:hover {
+    border-color: rgba(180, 160, 255, 0.3);
+  }
+
+  .exp-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .exp-number {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .exp-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 400;
+  }
+
+  .exp-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    background: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+
+  .btn:hover {
+    border-color: var(--color-accent);
+    color: var(--color-text);
+  }
+
+  .btn-accent {
+    background: rgba(180, 160, 255, 0.15);
+    border-color: rgba(180, 160, 255, 0.3);
+    color: var(--color-accent);
+  }
+
+  .btn-accent:hover {
+    background: rgba(180, 160, 255, 0.25);
+  }
+
+  select {
+    background: var(--color-surface-hover);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+    padding: 0.45rem 0.5rem;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  select:focus {
+    border-color: var(--color-accent);
+    outline: none;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    height: 6px;
+    width: 100px;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .param {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .param label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin: 0.75rem 0 1rem;
+  }
+
+  .viz {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    margin-top: 0.5rem;
+  }
+
+  .viz-tall {
+    height: 280px;
+  }
+
+  .status {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    margin-top: 0.5rem;
+    min-height: 1.2em;
+    opacity: 0.8;
+  }
+
+  .interactive-area {
+    width: 100%;
+    height: 280px;
+    border-radius: 8px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    cursor: crosshair;
+    position: relative;
+    touch-action: none;
+    margin-top: 0.5rem;
+  }
+
+  .interactive-area .cursor {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(180, 160, 255, 0.3);
+    border: 2px solid var(--color-accent);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: width 0.1s, height 0.1s;
+  }
+
+  @media (max-width: 640px) {
+    .lab-page { padding: 3rem 0; }
+    .param-grid { grid-template-columns: 1fr 1fr; }
+    input[type="range"] { width: 80px; }
+  }
+</style>

@@ -1,0 +1,16 @@
+{
+  "id": "012-fibonacci-spiral",
+  "title": "Fibonacci Spiral",
+  "description": "The Fibonacci sequence sonified: pitch = fib(n) mod 12, rhythm = fib(n) mod 5, velocity = fib(n) mod 40. The golden ratio's inherent aperiodicity creates melodies that feel both structured and surprising.",
+  "date": "2026-04-26",
+  "tags": [
+    "sonification",
+    "fibonacci",
+    "math-music",
+    "generative"
+  ],
+  "technique": "Data sonification (Fibonacci sequence)",
+  "bpm": 105,
+  "key": "G chromatic",
+  "file": "/music/012-fibonacci-spiral.mp3"
+}
