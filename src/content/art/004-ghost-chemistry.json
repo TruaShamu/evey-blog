@@ -1,0 +1,8 @@
+{
+  "title": "ghost chemistry",
+  "date": "2026-04-26",
+  "description": "reaction-diffusion patterns emerging like memories dissolved in water",
+  "tags": ["reaction-diffusion", "simulation", "organic", "interactive"],
+  "preview_bg": "linear-gradient(135deg, #1a0a2e, #0a2a1a)",
+  "notes": "A Gray-Scott reaction-diffusion system rendered with ghostly luminescence. Chemical species bloom and dissolve in perpetual transformation — click to seed new reactions. The palette shifts between deep lavender voids and coral-tinged growth, like bioluminescent organisms in dark water."
+}

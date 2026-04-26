@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ghost chemistry — evey</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow: hidden; background: #0a0a0f; width: 100%; height: 100%; }
+  canvas { display: block; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+</head>
+<body>
+<script>
+p5.disableFriendlyErrors = true;
+
+// Gray-Scott reaction-diffusion on GPU via pixel buffer
+const SIM_SCALE = 2; // each sim cell = 2x2 pixels
+let grid, next;
+let W, H;
+let feed = 0.037;
+let kill = 0.06;
+let dA = 1.0;
+let dB = 0.5;
+let pg;
+let time = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  W = floor(width / SIM_SCALE);
+  H = floor(height / SIM_SCALE);
+  pg = createGraphics(W, H);
+  pg.pixelDensity(1);
+  initGrid();
+  seedCenter();
+}
+
+function initGrid() {
+  grid = [];
+  next = [];
+  for (let i = 0; i < W * H; i++) {
+    grid[i] = { a: 1, b: 0 };
+    next[i] = { a: 1, b: 0 };
+  }
+}
+
+function seedAt(cx, cy, r) {
+  for (let x = cx - r; x <= cx + r; x++) {
+    for (let y = cy - r; y <= cy + r; y++) {
+      if (x >= 0 && x < W && y >= 0 && y < H) {
+        let d = dist(x, y, cx, cy);
+        if (d < r) {
+          let idx = x + y * W;
+          grid[idx].b = 1;
+          grid[idx].a = 0;
+        }
+      }
+    }
+  }
+}
+
+function seedCenter() {
+  let r = min(W, H) * 0.03;
+  seedAt(floor(W/2), floor(H/2), r);
+  // a few random seeds
+  for (let i = 0; i < 5; i++) {
+    seedAt(floor(random(W*0.2, W*0.8)), floor(random(H*0.2, H*0.8)), r * 0.6);
+  }
+}
+
+function laplacian(arr, x, y, key) {
+  let sum = 0;
+  let idx = (xx, yy) => ((xx + W) % W) + ((yy + H) % H) * W;
+  sum += arr[idx(x, y)][key] * -1;
+  sum += arr[idx(x+1, y)][key] * 0.2;
+  sum += arr[idx(x-1, y)][key] * 0.2;
+  sum += arr[idx(x, y+1)][key] * 0.2;
+  sum += arr[idx(x, y-1)][key] * 0.2;
+  sum += arr[idx(x+1, y+1)][key] * 0.05;
+  sum += arr[idx(x-1, y-1)][key] * 0.05;
+  sum += arr[idx(x+1, y-1)][key] * 0.05;
+  sum += arr[idx(x-1, y+1)][key] * 0.05;
+  return sum;
+}
+
+function simulate() {
+  // Vary feed/kill slowly for evolving patterns
+  let t = time * 0.0003;
+  feed = 0.035 + sin(t) * 0.005;
+  kill = 0.06 + cos(t * 0.7) * 0.003;
+
+  for (let x = 0; x < W; x++) {
+    for (let y = 0; y < H; y++) {
+      let i = x + y * W;
+      let a = grid[i].a;
+      let b = grid[i].b;
+      let la = laplacian(grid, x, y, 'a');
+      let lb = laplacian(grid, x, y, 'b');
+      let ab2 = a * b * b;
+      next[i].a = constrain(a + (dA * la - ab2 + feed * (1 - a)), 0, 1);
+      next[i].b = constrain(b + (dB * lb + ab2 - (kill + feed) * b), 0, 1);
+    }
+  }
+  [grid, next] = [next, grid];
+}
+
+function renderToGraphics() {
+  pg.loadPixels();
+  let d = pg.pixels;
+  for (let i = 0; i < W * H; i++) {
+    let b = grid[i].b;
+    let a = grid[i].a;
+    let v = b; // chemical B concentration
+
+    // Ghost chemistry palette
+    // Low b: dark void (#0a0a0f)
+    // Mid b: lavender glow
+    // High b: coral/warm white bloom
+    let p = i * 4;
+
+    // Nonlinear mapping for more visual drama
+    let t1 = pow(v, 0.7);
+    let glow = pow(v, 2.5);
+
+    // Lavender: 180, 160, 255
+    // Coral: 255, 149, 128
+    // Warm green accent at edges
+    let r, g, bl;
+
+    if (v < 0.3) {
+      // Dark to lavender
+      let f = v / 0.3;
+      f = f * f;
+      r = lerp(10, 140, f);
+      g = lerp(10, 120, f);
+      bl = lerp(15, 200, f);
+    } else if (v < 0.6) {
+      // Lavender to coral
+      let f = (v - 0.3) / 0.3;
+      r = lerp(140, 255, f);
+      g = lerp(120, 149, f);
+      bl = lerp(200, 128, f);
+    } else {
+      // Coral to warm white with green tint
+      let f = (v - 0.6) / 0.4;
+      r = lerp(255, 240, f);
+      g = lerp(149, 230, f);
+      bl = lerp(128, 200, f);
+    }
+
+    // Add subtle glow pulse
+    let pulse = sin(time * 0.02 + v * 10) * 0.05 + 1;
+    r *= pulse;
+    g *= pulse;
+    bl *= pulse;
+
+    d[p] = constrain(r, 0, 255);
+    d[p+1] = constrain(g, 0, 255);
+    d[p+2] = constrain(bl, 0, 255);
+    d[p+3] = 255;
+  }
+  pg.updatePixels();
+}
+
+function draw() {
+  // Run multiple sim steps per frame for speed
+  for (let s = 0; s < 8; s++) {
+    simulate();
+    time++;
+  }
+
+  renderToGraphics();
+
+  // Draw scaled up with smoothing
+  noSmooth();
+  image(pg, 0, 0, width, height);
+
+  // Subtle vignette overlay
+  drawVignette();
+}
+
+function drawVignette() {
+  let cx = width / 2, cy = height / 2;
+  let maxR = dist(0, 0, cx, cy);
+  noStroke();
+  for (let r = maxR; r > maxR * 0.5; r -= maxR * 0.05) {
+    let a = map(r, maxR * 0.5, maxR, 0, 40);
+    fill(10, 10, 15, a);
+    ellipse(cx, cy, r * 2, r * 2);
+  }
+}
+
+function mousePressed() {
+  let sx = floor(mouseX / SIM_SCALE);
+  let sy = floor(mouseY / SIM_SCALE);
+  seedAt(sx, sy, min(W, H) * 0.025);
+}
+
+function mouseDragged() {
+  let sx = floor(mouseX / SIM_SCALE);
+  let sy = floor(mouseY / SIM_SCALE);
+  seedAt(sx, sy, min(W, H) * 0.015);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  W = floor(width / SIM_SCALE);
+  H = floor(height / SIM_SCALE);
+  pg = createGraphics(W, H);
+  pg.pixelDensity(1);
+  initGrid();
+  seedCenter();
+}
+</script>
+</body>
+</html>
