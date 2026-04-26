@@ -1,0 +1,8 @@
+{
+  "title": "cellular memory",
+  "date": "2026-04-26",
+  "description": "A Game of Life variant where cells remember their history through color.",
+  "tags": ["cellular-automata", "emergence", "memory"],
+  "preview_bg": "linear-gradient(135deg, #0a0f0a, #0a1a1a)",
+  "notes": "Standard Game of Life is binary — alive or dead. But what if cells remembered how long they'd lived? Here, age maps to hue. Newborns glow cyan, elders fade through gold to deep red before dying. The patterns that emerge feel like watching a civilization from orbit."
+}

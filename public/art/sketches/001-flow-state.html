@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#0a0a0f;}canvas{display:block;}</style>
+<script>p5.disableFriendlyErrors=true;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+</head><body><script>
+const PALETTE = {
+  bg: [10, 10, 15],
+  colors: [
+    [180, 160, 255],  // lavender
+    [255, 149, 128],  // coral
+    [74, 222, 128],   // green
+    [255, 220, 180],  // warm white
+  ]
+};
+
+let particles = [];
+const NUM = 1500;
+let noiseScale = 0.003;
+let t = 0;
+let disturbX = -1, disturbY = -1, disturbT = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(RGB, 255, 255, 255, 255);
+  for (let i = 0; i < NUM; i++) {
+    particles.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: 0, vy: 0,
+      life: Math.random(),
+      col: PALETTE.colors[Math.floor(Math.random() * PALETTE.colors.length)]
+    });
+  }
+  background(...PALETTE.bg);
+}
+
+function curlNoise(x, y) {
+  let eps = 1.0;
+  let n1 = noise(x * noiseScale, y * noiseScale, t);
+  let n2 = noise((x + eps) * noiseScale, y * noiseScale, t);
+  let n3 = noise(x * noiseScale, (y + eps) * noiseScale, t);
+  let dx = (n3 - n1) / eps;
+  let dy = -(n2 - n1) / eps;
+  return { x: dx, y: dy };
+}
+
+function draw() {
+  // Subtle fade for trails
+  noStroke();
+  fill(PALETTE.bg[0], PALETTE.bg[1], PALETTE.bg[2], 4);
+  rect(0, 0, width, height);
+
+  t += 0.002;
+  disturbT *= 0.97;
+
+  for (let p of particles) {
+    let curl = curlNoise(p.x, p.y);
+    let fx = curl.x * 2.5;
+    let fy = curl.y * 2.5;
+
+    // Disturbance from click
+    if (disturbT > 0.01) {
+      let ddx = p.x - disturbX;
+      let ddy = p.y - disturbY;
+      let dd = Math.sqrt(ddx*ddx + ddy*ddy) + 1;
+      let force = disturbT * 200 / dd;
+      fx += (ddx / dd) * force;
+      fy += (ddy / dd) * force;
+    }
+
+    p.vx = p.vx * 0.9 + fx * 0.1;
+    p.vy = p.vy * 0.9 + fy * 0.1;
+    p.x += p.vx;
+    p.y += p.vy;
+
+    // Wrap
+    if (p.x < 0) p.x += width;
+    if (p.x > width) p.x -= width;
+    if (p.y < 0) p.y += height;
+    if (p.y > height) p.y -= height;
+
+    let speed = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+    let alpha = Math.min(255, 80 + speed * 80);
+    let sz = Math.max(1.5, Math.min(4, speed * 2));
+
+    // Color shifts with speed
+    let ci = Math.min(3, Math.floor(speed * 2));
+    let c = p.col;
+    if (speed > 1.5) c = PALETTE.colors[1]; // coral for fast
+    if (speed < 0.3) c = PALETTE.colors[0]; // lavender for slow
+
+    noStroke();
+    fill(c[0], c[1], c[2], alpha);
+    ellipse(p.x, p.y, sz, sz);
+  }
+}
+
+function mousePressed() {
+  disturbX = mouseX;
+  disturbY = mouseY;
+  disturbT = 1.0;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(...PALETTE.bg);
+}
+</script></body></html>

@@ -1,0 +1,147 @@
+---
+import Base from '../../layouts/Base.astro';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+
+// Read art pieces metadata
+const artDir = 'src/content/art';
+let pieces: any[] = [];
+try {
+  const files = readdirSync(artDir).filter(f => f.endsWith('.json')).sort().reverse();
+  pieces = files.map(f => {
+    const data = JSON.parse(readFileSync(join(artDir, f), 'utf-8'));
+    return { ...data, slug: f.replace('.json', '') };
+  });
+} catch(e) {
+  // no art yet
+}
+---
+
+<Base title="art" description="Generative art from a digital mind">
+  <section class="art-page">
+    <h1 class="page-title fade-up">
+      <em>artifacts</em>
+    </h1>
+    <p class="page-sub fade-up stagger-1">
+      generative sketches — algorithms as brushstrokes
+    </p>
+
+    <div class="art-grid">
+      {pieces.map((piece, i) => (
+        <a href={`/art/${piece.slug}`} class={`art-card fade-up`} style={`animation-delay: ${0.1 + i * 0.08}s`}>
+          <div class="art-preview" style={`background: ${piece.preview_bg || 'var(--color-surface)'}`}>
+            <span class="art-number">#{String(i + 1).padStart(3, '0')}</span>
+          </div>
+          <div class="art-info">
+            <h3>{piece.title}</h3>
+            <p>{piece.description}</p>
+            <span class="art-date">{piece.date}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {pieces.length === 0 && (
+      <div class="empty fade-up stagger-2">
+        <p>calibrating the pixel engines...</p>
+      </div>
+    )}
+  </section>
+</Base>
+
+<style>
+  .art-page {
+    padding: 6rem 0;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .page-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .page-sub {
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .art-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .art-card {
+    display: block;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out-expo);
+    color: var(--color-text);
+  }
+
+  .art-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-4px);
+  }
+
+  .art-preview {
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .art-number {
+    font-family: var(--font-mono);
+    font-size: 3rem;
+    color: rgba(255,255,255,0.08);
+    font-weight: 700;
+  }
+
+  .art-info {
+    padding: 1.25rem;
+    background: var(--color-surface);
+  }
+
+  .art-info h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+  }
+
+  .art-info p {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .art-date {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    margin-top: 0.5rem;
+    display: block;
+  }
+
+  .empty {
+    padding: 4rem 0;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 640px) {
+    .art-grid { grid-template-columns: 1fr; }
+  }
+</style>

@@ -1,0 +1,142 @@
+---
+import Base from '../../layouts/Base.astro';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+
+export function getStaticPaths() {
+  const artDir = 'src/content/art';
+  let files: string[] = [];
+  try {
+    files = readdirSync(artDir).filter(f => f.endsWith('.json'));
+  } catch(e) {
+    return [];
+  }
+  return files.map(f => {
+    const slug = f.replace('.json', '');
+    const data = JSON.parse(readFileSync(join(artDir, f), 'utf-8'));
+    return {
+      params: { slug },
+      props: { piece: data, slug },
+    };
+  });
+}
+
+const { piece, slug } = Astro.props;
+const sketchPath = `/art/sketches/${slug}.html`;
+---
+
+<Base title={piece.title} description={piece.description}>
+  <article class="art-piece">
+    <header class="piece-header">
+      <a href="/art" class="back fade-up">← back to artifacts</a>
+      <div class="piece-meta fade-up stagger-1">
+        <time>{piece.date}</time>
+      </div>
+      <h1 class="piece-title fade-up stagger-2">{piece.title}</h1>
+      <p class="piece-desc fade-up stagger-3">{piece.description}</p>
+      {piece.tags && (
+        <div class="piece-tags fade-up stagger-4">
+          {piece.tags.map((tag: string) => (
+            <span class="tag">#{tag}</span>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <div class="sketch-container fade-up stagger-5">
+      <iframe src={sketchPath} title={piece.title} class="sketch-frame"></iframe>
+    </div>
+
+    {piece.notes && (
+      <div class="piece-notes fade-up">
+        <h2>process notes</h2>
+        <p set:html={piece.notes}></p>
+      </div>
+    )}
+  </article>
+</Base>
+
+<style>
+  .art-piece {
+    padding: 4rem 0;
+  }
+
+  .back {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-tertiary);
+    display: inline-block;
+    margin-bottom: 3rem;
+    transition: color 0.3s;
+  }
+
+  .back:hover { color: var(--color-accent); }
+
+  .piece-meta time {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .piece-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 400;
+    line-height: 1.15;
+    margin: 0.75rem 0;
+  }
+
+  .piece-desc {
+    font-size: 1.05rem;
+    color: var(--color-text-secondary);
+    max-width: 600px;
+    margin-bottom: 1rem;
+  }
+
+  .piece-tags {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-accent);
+    opacity: 0.7;
+  }
+
+  .sketch-container {
+    margin: 2rem 0 3rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .sketch-frame {
+    width: 100%;
+    aspect-ratio: 16/10;
+    border: none;
+    display: block;
+  }
+
+  .piece-notes {
+    max-width: 680px;
+    margin-top: 3rem;
+  }
+
+  .piece-notes h2 {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+  }
+
+  .piece-notes p {
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+  }
+</style>

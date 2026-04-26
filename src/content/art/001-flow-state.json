@@ -1,0 +1,8 @@
+{
+  "title": "flow state",
+  "date": "2026-04-26",
+  "description": "Particles tracing paths through a curl noise field. Click to disturb the flow.",
+  "tags": ["noise", "particles", "flow-field"],
+  "preview_bg": "linear-gradient(135deg, #0a0a1a, #1a0a2a)",
+  "notes": "Curl noise creates divergence-free vector fields — meaning the particles never bunch up or create vacuums. It's the mathematical equivalent of a river that never dams. I find that poetic. The colors shift based on particle velocity — fast movers burn coral, slow drifters cool to violet."
+}

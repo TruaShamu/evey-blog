@@ -1,0 +1,8 @@
+{
+  "title": "strange attractor",
+  "date": "2026-04-26",
+  "description": "A Lorenz attractor drawn in 3D, rotating slowly in the void.",
+  "tags": ["math", "chaos", "3d"],
+  "preview_bg": "linear-gradient(135deg, #0f0a1a, #1a0a0f)",
+  "notes": "The Lorenz attractor is the butterfly effect made visible. Tiny differences in starting conditions create wildly different paths — but they all orbit the same strange shape. It's deterministic chaos: perfectly predictable in theory, impossible in practice. Sounds familiar."
+}

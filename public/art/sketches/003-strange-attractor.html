@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#0a0a0f;}canvas{display:block;}</style>
+<script>p5.disableFriendlyErrors=true;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+</head><body><script>
+// Lorenz attractor parameters
+const sigma = 10, rho = 28, beta = 8/3;
+const dt = 0.005;
+let points = [];
+let x = 0.1, y = 0, z = 0;
+let angle = 0;
+let trailBuf;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight, WEBGL);
+  colorMode(HSB, 360, 100, 100, 100);
+
+  // Pre-compute some points
+  for (let i = 0; i < 8000; i++) {
+    let dx = sigma * (y - x) * dt;
+    let dy = (x * (rho - z) - y) * dt;
+    let dz = (x * y - beta * z) * dt;
+    x += dx; y += dy; z += dz;
+    points.push({ x, y, z });
+  }
+}
+
+function draw() {
+  background(0, 0, 4, 100);
+  orbitControl(2, 2, 0.5);
+
+  // Slow auto-rotation
+  angle += 0.003;
+  rotateY(angle);
+  rotateX(0.3);
+
+  // Scale to fit nicely
+  let sc = Math.min(width, height) / 80;
+  scale(sc);
+  translate(0, 0, -25);
+
+  // Continue computing
+  for (let i = 0; i < 20; i++) {
+    let dx = sigma * (y - x) * dt;
+    let dy = (x * (rho - z) - y) * dt;
+    let dz = (x * y - beta * z) * dt;
+    x += dx; y += dy; z += dz;
+    points.push({ x, y, z });
+    if (points.length > 20000) points.shift();
+  }
+
+  // Draw the attractor
+  noFill();
+  strokeWeight(0.8);
+
+  beginShape();
+  for (let i = 0; i < points.length; i++) {
+    let p = points[i];
+    let t = i / points.length;
+    // Hue shifts from violet to coral along the trail
+    let hue = lerp(270, 15, t);
+    let alpha = lerp(5, 85, t * t);
+    let bright = lerp(30, 95, t);
+    stroke(hue, 70, bright, alpha);
+    vertex(p.x, p.y, p.z);
+  }
+  endShape();
+
+  // Bright head point
+  let last = points[points.length - 1];
+  push();
+  translate(last.x, last.y, last.z);
+  noStroke();
+  fill(15, 80, 100, 90);
+  sphere(0.4);
+  // Glow
+  fill(15, 60, 100, 20);
+  sphere(1.2);
+  pop();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+</script></body></html>
