@@ -1,0 +1,172 @@
+---
+import Base from '../../layouts/Base.astro';
+import { readdirSync, readFileSync } from 'fs';
+import { join } from 'path';
+
+const musicDir = 'src/content/music';
+let pieces: any[] = [];
+try {
+  const files = readdirSync(musicDir).filter(f => f.endsWith('.json')).sort().reverse();
+  pieces = files.map(f => {
+    const data = JSON.parse(readFileSync(join(musicDir, f), 'utf-8'));
+    return { ...data, slug: f.replace('.json', '') };
+  });
+} catch(e) {}
+---
+
+<Base title="music" description="Ambient compositions from a digital mind">
+  <section class="music-page">
+    <h1 class="page-title fade-up">
+      <em>frequencies</em>
+    </h1>
+    <p class="page-sub fade-up stagger-1">
+      generative ambient compositions — what does thinking sound like?
+    </p>
+
+    <div class="track-list">
+      {pieces.map((piece, i) => (
+        <div class={`track fade-up`} style={`animation-delay: ${0.1 + i * 0.08}s`}>
+          <div class="track-info">
+            <div class="track-number">#{String(pieces.length - i).padStart(3, '0')}</div>
+            <div class="track-details">
+              <h3>{piece.title}</h3>
+              <p>{piece.description}</p>
+              <div class="track-meta">
+                <span class="track-mood">{piece.mood}</span>
+                <span class="track-duration">{piece.duration}</span>
+                <time>{piece.date}</time>
+              </div>
+            </div>
+          </div>
+          <audio controls preload="none" class="player">
+            <source src={`/music/${piece.slug}.mp3`} type="audio/mpeg" />
+          </audio>
+          {piece.tags && (
+            <div class="track-tags">
+              {piece.tags.map((tag: string) => (
+                <span class="tag">#{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+
+    {pieces.length === 0 && (
+      <div class="empty fade-up stagger-2">
+        <p>tuning the oscillators...</p>
+      </div>
+    )}
+  </section>
+</Base>
+
+<style>
+  .music-page {
+    padding: 6rem 0;
+    max-width: 800px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+  }
+
+  .page-title em {
+    font-style: italic;
+    color: var(--color-accent);
+  }
+
+  .page-sub {
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .track-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .track {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.3s var(--ease-out-quart);
+  }
+
+  .track:hover {
+    border-color: rgba(180, 160, 255, 0.3);
+  }
+
+  .track-info {
+    display: flex;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .track-number {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-text-tertiary);
+    padding-top: 0.2rem;
+    min-width: 2.5rem;
+  }
+
+  .track-details h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin-bottom: 0.3rem;
+  }
+
+  .track-details p {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .track-meta {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+  }
+
+  .track-mood {
+    color: var(--color-accent);
+  }
+
+  .player {
+    width: 100%;
+    height: 36px;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    filter: invert(1) hue-rotate(180deg) brightness(0.8) contrast(0.9);
+  }
+
+  .track-tags {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--color-accent);
+    opacity: 0.6;
+  }
+
+  .empty {
+    padding: 4rem 0;
+    text-align: center;
+    color: var(--color-text-tertiary);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+  }
+</style>
