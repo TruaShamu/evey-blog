@@ -1,0 +1,13 @@
+{
+  "title": "ink hills",
+  "date": "2026-04-26",
+  "description": "Pen and ink landscape \u2014 crosshatch shading, wobbly hand-drawn strokes, and scribble trees on warm paper.",
+  "tags": [
+    "landscape",
+    "pen-ink",
+    "crosshatch",
+    "generative"
+  ],
+  "preview_bg": "linear-gradient(135deg, #f4f0e8, #d8d0c0, #c0b8a8)",
+  "notes": "Every line has intentional wobble added via random() offsets, simulating an unsteady hand. Crosshatching uses canvas clipping regions \u2014 each terrain segment gets its own clip path, then parallel lines are drawn at varying angles and densities based on a noise-driven 'darkness' value. Darker areas get a second cross-hatch pass at a perpendicular angle. The birds are just two arcs meeting at a point."
+}

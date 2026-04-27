@@ -1,0 +1,13 @@
+{
+  "title": "twilight peaks",
+  "date": "2026-04-26",
+  "description": "Layered mountains under an aurora sky with reflective water. Perlin noise sculpts the ridgelines, atmospheric fog creates depth.",
+  "tags": [
+    "landscape",
+    "perlin-noise",
+    "mountains",
+    "aurora"
+  ],
+  "preview_bg": "linear-gradient(135deg, #0a0a2e, #1a0820, #2a1510)",
+  "notes": "Seven mountain layers each with their own noise frequency \u2014 far peaks use broad, gentle noise (0.001) while nearby ridges use tighter detail (0.004). Atmospheric perspective desaturates and brightens distant layers, just like real haze. The aurora uses three overlapping noise-driven curtains with sinusoidal vertical falloff. Press R to randomize, S to save."
+}

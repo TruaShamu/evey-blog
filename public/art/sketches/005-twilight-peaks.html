@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generative Landscape</title>
+  <script>p5.disableFriendlyErrors = true;</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #000; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+<script>
+// === Generative Landscape ===
+// Layered mountains with atmospheric fog, aurora sky, and reflective water
+
+const CONFIG = {
+  seed: 777,
+  layers: 7,
+  waterLine: 0.65,
+  skyGrain: 0.003,
+  auroraStrength: 0.4,
+};
+
+// Moody twilight palette
+const PALETTE = {
+  skyTop:    [230, 15, 8],     // HSB - deep indigo
+  skyMid:    [260, 40, 25],    // purple twilight
+  skyLow:    [15, 60, 55],     // warm horizon
+  aurora:    [160, 70, 60],    // teal green glow
+  aurora2:   [280, 50, 50],    // soft violet
+  sun:       [35, 70, 95],     // golden
+  mountains: [
+    [220, 15, 12],   // farthest - almost silhouette
+    [225, 20, 16],
+    [230, 25, 14],
+    [235, 30, 12],
+    [240, 35, 10],
+    [245, 40, 8],
+    [250, 50, 6],    // nearest - darkest
+  ],
+  water:     [220, 40, 15],
+  waterHighlight: [35, 30, 40],
+  stars:     [50, 10, 95],
+  mist:      [230, 10, 70],
+};
+
+let skyBuffer, mountainBuffer, waterBuffer;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  colorMode(HSB, 360, 100, 100, 100);
+  randomSeed(CONFIG.seed);
+  noiseSeed(CONFIG.seed);
+  noLoop();
+}
+
+function draw() {
+  background(0);
+  drawSky();
+  drawStars();
+  drawAurora();
+  drawSun();
+  drawMountains();
+  drawWater();
+  drawMist();
+  applyVignette();
+  applyGrain();
+}
+
+// === SKY ===
+function drawSky() {
+  let waterY = height * CONFIG.waterLine;
+  for (let y = 0; y < waterY; y++) {
+    let t = y / waterY;
+    let h, s, b;
+    if (t < 0.4) {
+      let lt = t / 0.4;
+      h = lerp(PALETTE.skyTop[0], PALETTE.skyMid[0], lt);
+      s = lerp(PALETTE.skyTop[1], PALETTE.skyMid[1], lt);
+      b = lerp(PALETTE.skyTop[2], PALETTE.skyMid[2], lt);
+    } else {
+      let lt = (t - 0.4) / 0.6;
+      lt = lt * lt; // ease in for warm horizon glow
+      h = lerp(PALETTE.skyMid[0], PALETTE.skyLow[0], lt);
+      s = lerp(PALETTE.skyMid[1], PALETTE.skyLow[1], lt);
+      b = lerp(PALETTE.skyMid[2], PALETTE.skyLow[2], lt);
+    }
+    stroke(h, s, b);
+    line(0, y, width, y);
+  }
+}
+
+// === STARS ===
+function drawStars() {
+  noStroke();
+  let waterY = height * CONFIG.waterLine;
+  for (let i = 0; i < 200; i++) {
+    let x = random(width);
+    let y = random(waterY * 0.6);
+    let sz = random(0.5, 2.5);
+    let twinkle = noise(x * 0.1, y * 0.1, CONFIG.seed) * 60 + 40;
+    fill(PALETTE.stars[0], PALETTE.stars[1], PALETTE.stars[2], twinkle);
+    ellipse(x, y, sz);
+  }
+}
+
+// === AURORA ===
+function drawAurora() {
+  let waterY = height * CONFIG.waterLine;
+  noStroke();
+  for (let x = 0; x < width; x += 2) {
+    for (let layer = 0; layer < 3; layer++) {
+      let nx = x * 0.002 + layer * 10;
+      let wave = noise(nx, layer * 5.5) * waterY * 0.5;
+      let baseY = waterY * 0.1 + wave;
+      let aHeight = noise(nx + 100, layer * 3) * waterY * 0.3 + 20;
+      
+      for (let dy = 0; dy < aHeight; dy += 3) {
+        let t = dy / aHeight;
+        let fade = Math.sin(t * Math.PI); // fade at top and bottom
+        let alpha = fade * CONFIG.auroraStrength * 15 * noise(nx + dy * 0.01);
+        
+        let isGreen = layer < 2;
+        let col = isGreen ? PALETTE.aurora : PALETTE.aurora2;
+        fill(col[0], col[1], col[2], alpha);
+        rect(x, baseY + dy, 3, 4);
+      }
+    }
+  }
+}
+
+// === SUN (low on horizon) ===
+function drawSun() {
+  let waterY = height * CONFIG.waterLine;
+  let sunX = width * 0.35;
+  let sunY = waterY - height * 0.02;
+  let sunR = height * 0.06;
+  
+  // Glow
+  noStroke();
+  for (let r = sunR * 8; r > 0; r -= 2) {
+    let t = r / (sunR * 8);
+    fill(PALETTE.sun[0], PALETTE.sun[1] * (1 - t * 0.5), PALETTE.sun[2], (1 - t) * 8);
+    ellipse(sunX, sunY, r * 2);
+  }
+  
+  // Sun body
+  fill(PALETTE.sun[0], PALETTE.sun[1] * 0.3, PALETTE.sun[2]);
+  ellipse(sunX, sunY, sunR * 2);
+}
+
+// === MOUNTAINS ===
+function drawMountains() {
+  let waterY = height * CONFIG.waterLine;
+  
+  for (let layer = 0; layer < CONFIG.layers; layer++) {
+    let t = layer / (CONFIG.layers - 1); // 0=farthest, 1=nearest
+    let baseY = lerp(waterY * 0.35, waterY, t);
+    let peakHeight = lerp(waterY * 0.45, waterY * 0.15, t);
+    let noiseScale = lerp(0.001, 0.004, t);
+    let detail = lerp(0.003, 0.008, t);
+    let col = PALETTE.mountains[layer];
+    
+    // Atmospheric fog - farther = brighter, more desaturated
+    let fogAmount = Math.pow(1 - t, 1.5);
+    let h = lerp(col[0], PALETTE.skyMid[0], fogAmount * 0.3);
+    let s = lerp(col[1], 5, fogAmount * 0.8);
+    let b = lerp(col[2], PALETTE.skyMid[2], fogAmount * 0.6);
+    
+    fill(h, s, b);
+    noStroke();
+    beginShape();
+    vertex(0, height);
+    
+    for (let x = 0; x <= width; x += 2) {
+      let nx = x * noiseScale + layer * 100;
+      let ridge = noise(nx) * peakHeight;
+      let micro = noise(x * detail, layer * 50) * peakHeight * 0.15;
+      let y = baseY - ridge - micro;
+      vertex(x, y);
+    }
+    
+    vertex(width, height);
+    endShape(CLOSE);
+    
+    // Snow caps on far mountains
+    if (layer < 3) {
+      let snowThreshold = baseY - peakHeight * 0.75;
+      fill(230, 5, 80, 15 - layer * 4);
+      beginShape();
+      vertex(0, height);
+      for (let x = 0; x <= width; x += 2) {
+        let nx = x * noiseScale + layer * 100;
+        let ridge = noise(nx) * peakHeight;
+        let micro = noise(x * detail, layer * 50) * peakHeight * 0.15;
+        let y = baseY - ridge - micro;
+        if (y < snowThreshold) {
+          vertex(x, y);
+        } else {
+          vertex(x, snowThreshold + noise(x * 0.01) * 10);
+        }
+      }
+      vertex(width, height);
+      endShape(CLOSE);
+    }
+  }
+}
+
+// === WATER ===
+function drawWater() {
+  let waterY = height * CONFIG.waterLine;
+  
+  // Base water
+  noStroke();
+  for (let y = waterY; y < height; y++) {
+    let t = (y - waterY) / (height - waterY);
+    let h = lerp(PALETTE.water[0], 230, t * 0.3);
+    let s = lerp(PALETTE.water[1], 20, t);
+    let b = lerp(PALETTE.water[2], 5, t * 0.7);
+    fill(h, s, b);
+    rect(0, y, width, 1);
+  }
+  
+  // Sun reflection on water
+  let sunX = width * 0.35;
+  for (let y = waterY; y < height; y += 2) {
+    let t = (y - waterY) / (height - waterY);
+    let spreadX = t * width * 0.15 + noise(y * 0.02) * 60;
+    let ripple = noise(y * 0.05, CONFIG.seed) * 20 - 10;
+    let alpha = (1 - t) * 20;
+    
+    fill(PALETTE.waterHighlight[0], PALETTE.waterHighlight[1], PALETTE.waterHighlight[2], alpha);
+    let segW = random(10, 40);
+    rect(sunX + ripple - spreadX / 2, y, segW, 2);
+    rect(sunX + ripple + spreadX / 2 - segW, y, segW, 2);
+    
+    // Center bright line
+    if (random() > 0.3) {
+      fill(PALETTE.sun[0], PALETTE.sun[1] * 0.5, PALETTE.sun[2], alpha * 0.6);
+      rect(sunX + ripple - 3, y, random(4, 15), 1.5);
+    }
+  }
+  
+  // Horizontal ripple lines
+  stroke(200, 10, 30, 8);
+  strokeWeight(0.5);
+  for (let y = waterY + 5; y < height; y += random(4, 12)) {
+    let xOff = noise(y * 0.03) * 100;
+    let len = random(40, 200);
+    let x = random(width);
+    line(x + xOff, y, x + xOff + len, y);
+  }
+}
+
+// === MIST ===
+function drawMist() {
+  let waterY = height * CONFIG.waterLine;
+  noStroke();
+  
+  // Low-lying mist between mountain layers
+  for (let i = 0; i < 5; i++) {
+    let mistY = waterY - height * 0.05 * (i + 1) + noise(i * 10) * height * 0.1;
+    for (let x = 0; x < width; x += 4) {
+      let n = noise(x * 0.003, i * 3, CONFIG.seed);
+      if (n > 0.45) {
+        let alpha = (n - 0.45) * 30;
+        let w = noise(x * 0.01, i) * 30 + 10;
+        fill(PALETTE.mist[0], PALETTE.mist[1], PALETTE.mist[2], alpha);
+        ellipse(x, mistY + noise(x * 0.005) * 30, w, noise(x * 0.008) * 15 + 5);
+      }
+    }
+  }
+}
+
+// === POST-PROCESSING ===
+function applyVignette() {
+  loadPixels();
+  let cx = width / 2, cy = height / 2;
+  let maxDist = Math.sqrt(cx * cx + cy * cy);
+  for (let i = 0; i < pixels.length; i += 4) {
+    let x = (i / 4) % width;
+    let y = Math.floor((i / 4) / width);
+    let dx = x - cx, dy = y - cy;
+    let d = Math.sqrt(dx * dx + dy * dy) / maxDist;
+    let factor = 1.0 - Math.pow(Math.max(0, (d - 0.4) / 0.6), 2) * 0.6;
+    pixels[i] *= factor;
+    pixels[i + 1] *= factor;
+    pixels[i + 2] *= factor;
+  }
+  updatePixels();
+}
+
+function applyGrain() {
+  loadPixels();
+  for (let i = 0; i < pixels.length; i += 4) {
+    let grain = (Math.random() - 0.5) * 12;
+    pixels[i] = Math.max(0, Math.min(255, pixels[i] + grain));
+    pixels[i + 1] = Math.max(0, Math.min(255, pixels[i + 1] + grain));
+    pixels[i + 2] = Math.max(0, Math.min(255, pixels[i + 2] + grain));
+  }
+  updatePixels();
+}
+
+function keyPressed() {
+  if (key === 's' || key === 'S') saveCanvas('landscape', 'png');
+  if (key === 'r' || key === 'R') {
+    CONFIG.seed = floor(random(99999));
+    randomSeed(CONFIG.seed);
+    noiseSeed(CONFIG.seed);
+    redraw();
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  redraw();
+}
+</script>
+</body>
+</html>

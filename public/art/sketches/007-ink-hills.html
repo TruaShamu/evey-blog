@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pen & Ink Landscape</title>
+<script>p5.disableFriendlyErrors = true;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #f4f0e8; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<script>
+// STYLE 2: PEN & INK — crosshatch shading, no color, visible strokes
+const CONFIG = { seed: 42 };
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  noLoop();
+}
+
+function getY(x, row, total) {
+  let t = row / total;
+  let baseY = lerp(height * 0.3, height * 0.92, t);
+  let amp = height * 0.3 * (1 - t * 0.3);
+  let ns = lerp(0.003, 0.008, t);
+  let n = noise(x * ns + row * 4.2) + noise(x * ns * 2.1 + row * 8.5) * 0.4;
+  n /= 1.4;
+  return baseY - n * amp;
+}
+
+function hatch(x1, y1, x2, y2, density, angle) {
+  // Fill a region with hatching lines
+  let ca = Math.cos(angle), sa = Math.sin(angle);
+  let spacing = Math.max(2, 12 - density * 10);
+  let diag = Math.sqrt((x2-x1)**2 + (y2-y1)**2) * 2;
+
+  for (let d = -diag; d < diag; d += spacing) {
+    let lx1 = x1 + ca * d - sa * diag;
+    let ly1 = y1 + sa * d + ca * diag;
+    let lx2 = x1 + ca * d + sa * diag;
+    let ly2 = y1 + sa * d - ca * diag;
+    // Clip to bounding box (rough)
+    line(lx1, ly1, lx2, ly2);
+  }
+}
+
+function draw() {
+  randomSeed(CONFIG.seed);
+  noiseSeed(CONFIG.seed);
+  background('#f4f0e8'); // warm paper
+
+  let inkColor = color(30, 25, 20);
+  let lightInk = color(30, 25, 20, 40);
+  let totalRows = 8;
+
+  // Sky — sparse stipple dots
+  noStroke();
+  fill(30, 25, 20, 15);
+  for (let i = 0; i < 800; i++) {
+    let x = random(width);
+    let y = random(height * 0.4);
+    let density = noise(x * 0.005, y * 0.005);
+    if (density > 0.55) {
+      ellipse(x, y, random(0.5, 1.5));
+    }
+  }
+
+  // Birds
+  stroke(30, 25, 20, 120);
+  strokeWeight(0.8);
+  noFill();
+  for (let i = 0; i < 5; i++) {
+    let bx = random(width * 0.2, width * 0.8);
+    let by = random(height * 0.05, height * 0.2);
+    let bw = random(4, 10);
+    arc(bx - bw/2, by, bw, bw * 0.5, PI + 0.3, TWO_PI - 0.3);
+    arc(bx + bw/2, by, bw, bw * 0.5, PI + 0.3, TWO_PI - 0.3);
+  }
+
+  // Terrain layers
+  for (let row = 0; row < totalRows; row++) {
+    let t = row / (totalRows - 1);
+
+    // --- Contour line ---
+    stroke(30, 25, 20, 150 + t * 105);
+    strokeWeight(0.6 + t * 1.2);
+    noFill();
+    beginShape();
+    for (let x = 0; x <= width; x += 2) {
+      // Hand-drawn wobble
+      let wobble = random(-0.5, 0.5) * (1 + t);
+      vertex(x, getY(x, row, totalRows) + wobble);
+    }
+    endShape();
+
+    // --- Crosshatch shading below the line ---
+    // Determine darkness from noise
+    let hatchWeight = 0.3 + t * 0.4;
+    stroke(30, 25, 20, 30 + t * 50);
+    strokeWeight(hatchWeight);
+
+    // First hatch direction
+    let angle1 = PI / 4 + row * 0.15;
+    let segW = 30 + random(20);
+    for (let x = 0; x < width; x += segW) {
+      let y1 = getY(x + segW / 2, row, totalRows);
+      let y2 = row < totalRows - 1 ? getY(x + segW / 2, row + 1, totalRows) : height;
+      let darkness = noise(x * 0.003 + row * 3);
+
+      if (darkness > 0.4) {
+        // Clip region
+        push();
+        drawingContext.save();
+        drawingContext.beginPath();
+        for (let cx = x; cx <= x + segW; cx += 2) {
+          let cy = getY(cx, row, totalRows);
+          if (cx === x) drawingContext.moveTo(cx, cy);
+          else drawingContext.lineTo(cx, cy);
+        }
+        drawingContext.lineTo(x + segW, y2 + 20);
+        drawingContext.lineTo(x, y2 + 20);
+        drawingContext.closePath();
+        drawingContext.clip();
+
+        let spacing = lerp(8, 3, darkness);
+        let hatchLen = (y2 - y1) + 40;
+        for (let d = -hatchLen; d < segW + hatchLen; d += spacing) {
+          let hx = x + d;
+          line(hx, y1 - 10, hx + Math.cos(angle1) * hatchLen, y1 - 10 + Math.sin(angle1) * hatchLen);
+        }
+
+        // Cross hatch for darker areas
+        if (darkness > 0.6) {
+          let angle2 = -PI / 4 + row * 0.1;
+          let spacing2 = lerp(10, 4, darkness);
+          stroke(30, 25, 20, 20 + t * 30);
+          for (let d = -hatchLen; d < segW + hatchLen; d += spacing2) {
+            let hx = x + d;
+            line(hx, y1 - 10, hx + Math.cos(angle2) * hatchLen, y1 - 10 + Math.sin(angle2) * hatchLen);
+          }
+        }
+
+        drawingContext.restore();
+        pop();
+      }
+    }
+
+    // --- Ink trees (foreground) ---
+    if (t > 0.4) {
+      for (let x = 0; x < width; x += random(20, 60)) {
+        if (random() > 0.12) continue;
+        let groundY = getY(x, row, totalRows);
+        drawInkTree(x, groundY, 8 + t * 20);
+      }
+    }
+
+    // --- Grass strokes ---
+    if (t > 0.3) {
+      stroke(30, 25, 20, 60 + t * 80);
+      strokeWeight(0.5 + t * 0.3);
+      for (let x = 0; x < width; x += random(3, 8)) {
+        if (random() > 0.3) continue;
+        let groundY = getY(x, row, totalRows);
+        let gh = random(3, 8 + t * 8);
+        let lean = random(-3, 3);
+        noFill();
+        bezier(x, groundY, x + lean * 0.3, groundY - gh * 0.4, x + lean * 0.7, groundY - gh * 0.7, x + lean, groundY - gh);
+      }
+    }
+  }
+
+  // Vignette (subtle darkening at edges via paper-colored overlay with gradient)
+  noStroke();
+  let cx = width / 2, cy = height / 2;
+  let maxR = Math.sqrt(cx * cx + cy * cy);
+  for (let r = maxR; r > maxR * 0.5; r -= 3) {
+    let t = (r - maxR * 0.5) / (maxR * 0.5);
+    fill(30, 25, 20, t * 4);
+    ellipse(cx, cy, r * 2, r * 2);
+  }
+}
+
+function drawInkTree(x, groundY, size) {
+  // Trunk — wobbly line
+  stroke(30, 25, 20, 180);
+  strokeWeight(1 + size * 0.05);
+  let trunkH = size * random(1.2, 2);
+  noFill();
+  beginShape();
+  for (let dy = 0; dy < trunkH; dy += 2) {
+    vertex(x + random(-0.5, 0.5), groundY - dy);
+  }
+  endShape();
+
+  // Canopy — scribble circles
+  let topY = groundY - trunkH;
+  let canopyR = size * random(0.5, 1);
+  strokeWeight(0.5 + size * 0.02);
+  stroke(30, 25, 20, 100);
+  noFill();
+
+  for (let i = 0; i < 8; i++) {
+    let cx = x + random(-canopyR * 0.4, canopyR * 0.4);
+    let cy = topY + random(-canopyR * 0.3, canopyR * 0.3);
+    let rw = random(canopyR * 0.4, canopyR);
+    let rh = random(canopyR * 0.3, canopyR * 0.8);
+    // Scribble ellipse
+    beginShape();
+    for (let a = 0; a < TWO_PI + 0.5; a += 0.15) {
+      let wobble = random(-1, 1);
+      vertex(cx + Math.cos(a) * rw + wobble, cy + Math.sin(a) * rh + wobble);
+    }
+    endShape();
+  }
+
+  // Fill scribbles for darkness
+  stroke(30, 25, 20, 40);
+  strokeWeight(0.4);
+  for (let i = 0; i < 15; i++) {
+    let lx = x + random(-canopyR, canopyR) * 0.6;
+    let ly = topY + random(-canopyR, canopyR) * 0.5;
+    let len = random(3, canopyR * 0.5);
+    let a = random(TWO_PI);
+    line(lx, ly, lx + Math.cos(a) * len, ly + Math.sin(a) * len);
+  }
+}
+
+function keyPressed() {
+  if (key === 's') saveCanvas('ink-landscape', 'png');
+  if (key === 'r') { CONFIG.seed = floor(random(99999)); redraw(); }
+}
+function windowResized() { resizeCanvas(windowWidth, windowHeight); redraw(); }
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "title": "pixel valley",
+  "date": "2026-04-26",
+  "description": "Retro pixel art landscape \u2014 320\u00d7200 render with Bayer ordered dithering, scaled up with nearest-neighbor interpolation.",
+  "tags": [
+    "landscape",
+    "pixel-art",
+    "dithering",
+    "retro"
+  ],
+  "preview_bg": "linear-gradient(135deg, #160e24, #1e3c28, #aa8c64)",
+  "notes": "Rendered at actual 320\u00d7200 resolution, then scaled 4\u00d7 with nearest-neighbor \u2014 no smoothing, pure crunchy pixels. The 16-color palette is quantized using ordered Bayer dithering (4\u00d74 threshold matrix), which creates those characteristic diagonal patterns. Triangle-shaped tree canopies are placed procedurally on the foreground terrain layers. The constraint of so few colors forces interesting visual decisions."
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Art Landscape</title>
+<script>p5.disableFriendlyErrors = true;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #1a1a2e; }
+  canvas { display: block; margin: auto; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<script>
+// STYLE 1: PIXEL ART — render tiny, scale up with nearest-neighbor
+const PIXEL_SCALE = 4;
+const W = 320, H = 200; // tiny resolution!
+const CONFIG = { seed: 42 };
+
+const PAL = [
+  [22, 14, 36],    // deep purple
+  [48, 32, 66],    // dark purple
+  [82, 54, 99],    // medium purple
+  [150, 82, 105],  // dusty rose
+  [210, 140, 100], // warm peach
+  [240, 200, 140], // pale gold
+  [255, 230, 180], // cream
+  [30, 60, 40],    // dark green
+  [50, 90, 50],    // forest green
+  [80, 130, 60],   // green
+  [120, 170, 80],  // light green
+  [170, 200, 110], // pale green
+  [60, 40, 30],    // dark brown
+  [90, 60, 40],    // brown
+  [20, 20, 30],    // near black
+  [255, 255, 220], // star white
+];
+
+function nearest(r, g, b) {
+  let best = PAL[0], bestD = Infinity;
+  for (let c of PAL) {
+    let d = (r-c[0])**2 + (g-c[1])**2 + (b-c[2])**2;
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
+function orderedDither(x, y, r, g, b) {
+  const M = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  let threshold = (M[y % 4][x % 4] / 16 - 0.5) * 50;
+  return nearest(r + threshold, g + threshold, b + threshold);
+}
+
+let buf;
+
+function setup() {
+  createCanvas(W * PIXEL_SCALE, H * PIXEL_SCALE);
+  buf = createGraphics(W, H);
+  buf.pixelDensity(1);
+  noLoop();
+  noSmooth();
+}
+
+function draw() {
+  randomSeed(CONFIG.seed);
+  noiseSeed(CONFIG.seed);
+
+  buf.colorMode(RGB, 255);
+  buf.noSmooth();
+
+  // Sky gradient
+  for (let y = 0; y < H * 0.6; y++) {
+    let t = y / (H * 0.6);
+    let r = lerp(22, 240, t * t);
+    let g = lerp(14, 200, t * t);
+    let b = lerp(36, 140, t * t);
+    buf.stroke(r, g, b);
+    buf.line(0, y, W, y);
+  }
+
+  // Stars
+  buf.noStroke();
+  for (let i = 0; i < 40; i++) {
+    let sx = random(W), sy = random(H * 0.3);
+    buf.fill(255, 255, 220, random(100, 255));
+    buf.rect(sx, sy, 1, 1);
+  }
+
+  // Sun
+  let sunX = W * 0.7, sunY = H * 0.48;
+  buf.fill(255, 230, 180);
+  buf.noStroke();
+  buf.ellipse(sunX, sunY, 16, 16);
+  buf.fill(240, 200, 140, 80);
+  buf.ellipse(sunX, sunY, 28, 28);
+
+  // Terrain layers
+  let layers = 6;
+  for (let layer = 0; layer < layers; layer++) {
+    let t = layer / (layers - 1);
+    let baseY = lerp(H * 0.35, H * 0.85, t);
+    let amp = lerp(H * 0.25, H * 0.08, t);
+    let ns = lerp(0.008, 0.025, t);
+
+    // Pick color
+    let gIdx = Math.floor(t * 4);
+    let col = [
+      [30, 60, 40], [50, 90, 50], [80, 130, 60], [120, 170, 80], [170, 200, 110]
+    ][gIdx];
+
+    buf.fill(col[0], col[1], col[2]);
+    buf.noStroke();
+    buf.beginShape();
+    buf.vertex(0, H);
+    for (let x = 0; x <= W; x++) {
+      let n = noise(x * ns + layer * 50);
+      let n2 = noise(x * ns * 2.5 + layer * 30) * 0.3;
+      let y = baseY - (n + n2) * amp;
+      buf.vertex(x, y);
+    }
+    buf.vertex(W, H);
+    buf.endShape(CLOSE);
+
+    // Pixel trees (foreground layers only)
+    if (layer >= 3) {
+      for (let x = 0; x < W; x += random(6, 18)) {
+        if (random() > 0.4) continue;
+        let n = noise(x * ns + layer * 50);
+        let n2 = noise(x * ns * 2.5 + layer * 30) * 0.3;
+        let groundY = baseY - (n + n2) * amp;
+        let treeH = Math.floor(random(4, 10 + t * 6));
+        // Trunk
+        buf.fill(60, 40, 30);
+        buf.rect(x, groundY - treeH, 1, treeH);
+        // Triangle canopy
+        let canopyW = Math.floor(random(3, 6));
+        let canopyH = Math.floor(random(3, 7));
+        let darkG = [30, 60, 40];
+        let lightG = [80, 130, 60];
+        for (let cy = 0; cy < canopyH; cy++) {
+          let rowW = Math.ceil(canopyW * (1 - cy / canopyH));
+          let isLight = cy < canopyH / 2;
+          buf.fill(isLight ? lightG[0] : darkG[0], isLight ? lightG[1] : darkG[1], isLight ? lightG[2] : darkG[2]);
+          buf.rect(x - Math.floor(rowW / 2), groundY - treeH - canopyH + cy, rowW, 1);
+        }
+      }
+    }
+  }
+
+  // Foreground grass tufts
+  buf.noStroke();
+  for (let x = 0; x < W; x += 2) {
+    if (random() > 0.3) continue;
+    let gy = H * 0.9 + noise(x * 0.05) * H * 0.08;
+    buf.fill(50, 90, 50);
+    buf.rect(x, gy - random(2, 5), 1, random(2, 5));
+  }
+
+  // Apply ordered dithering
+  buf.loadPixels();
+  for (let i = 0; i < buf.pixels.length; i += 4) {
+    let x = (i / 4) % W;
+    let y = Math.floor((i / 4) / W);
+    let c = orderedDither(x, y, buf.pixels[i], buf.pixels[i+1], buf.pixels[i+2]);
+    buf.pixels[i] = c[0]; buf.pixels[i+1] = c[1]; buf.pixels[i+2] = c[2];
+  }
+  buf.updatePixels();
+
+  // Scale up with nearest-neighbor
+  noSmooth();
+  image(buf, 0, 0, width, height);
+}
+
+function keyPressed() {
+  if (key === 's') saveCanvas('pixel-landscape', 'png');
+  if (key === 'r') { CONFIG.seed = floor(random(99999)); redraw(); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "title": "watercolor meadow",
+  "date": "2026-04-26",
+  "description": "Soft watercolor washes with bleeding edges, gaussian-jittered blobs, and paper grain texture.",
+  "tags": [
+    "landscape",
+    "watercolor",
+    "generative",
+    "soft"
+  ],
+  "preview_bg": "linear-gradient(135deg, #a8c8e8, #c8d8c8, #f5f0e6)",
+  "notes": "Each 'wash' is built from many overlapping semi-transparent ellipses with gaussian-random position jitter \u2014 the same technique real watercolor artists get from wet paper bleeding. Three wash passes per terrain layer with slightly varied colors create that characteristic depth. Paper grain is pixel-level noise applied twice (before and after painting). Trees are clusters of green blobs; flowers are bezier stems with bloom blobs at the tip."
+}
