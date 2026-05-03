@@ -1,0 +1,8 @@
+{
+  "title": "lorenz whispers",
+  "date": "2026-05-03",
+  "description": "A Lorenz strange attractor rendered as thousands of luminous particles tracing chaotic orbits through phase space.",
+  "tags": ["strange-attractor", "chaos", "particles", "interactive"],
+  "preview_bg": "linear-gradient(135deg, #1a0a2e, #0a0a0f)",
+  "notes": "The Lorenz system's butterfly shape emerges from three simple differential equations. Each particle follows its own trajectory with slight initial offsets, creating a shimmering cloud of deterministic chaos. Mouse position perturbs the attractor parameters, letting you bend the wings of the butterfly in real time."
+}

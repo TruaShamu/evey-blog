@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>lorenz whispers</title>
+<style>html,body{margin:0;padding:0;overflow:hidden;background:#0a0a0f;}</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+</head>
+<body>
+<script>
+p5.disableFriendlyErrors = true;
+
+const NUM_PARTICLES = 2000;
+const TRAIL_LENGTH = 6;
+let particles = [];
+let sigma = 10, rho = 28, beta = 8/3;
+let scale_factor;
+let fade_bg;
+let hueShift = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 100);
+  scale_factor = min(width, height) / 55;
+  fade_bg = color(0, 0, 4, 8);
+  
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push({
+      x: random(-0.1, 0.1) + 0.1,
+      y: random(-0.1, 0.1),
+      z: random(-0.1, 0.1) + 25,
+      trail: [],
+      birth: i * 0.5
+    });
+  }
+  background(0, 0, 4);
+}
+
+function draw() {
+  // Subtle fade for trails
+  noStroke();
+  fill(0, 0, 4, 6);
+  rect(0, 0, width, height);
+  
+  hueShift += 0.15;
+  
+  // Mouse interaction perturbs rho
+  let mRho = rho + (mouseX / width - 0.5) * 8;
+  let mSigma = sigma + (mouseY / height - 0.5) * 4;
+  
+  let dt = 0.005;
+  
+  push();
+  translate(width / 2, height * 0.6);
+  
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    let p = particles[i];
+    if (frameCount < p.birth) continue;
+    
+    // Lorenz equations
+    let dx = mSigma * (p.y - p.x) * dt;
+    let dy = (p.x * (mRho - p.z) - p.y) * dt;
+    let dz = (p.x * p.y - beta * p.z) * dt;
+    
+    p.x += dx;
+    p.y += dy;
+    p.z += dz;
+    
+    // Screen projection (simple orthographic with z-depth)
+    let sx = p.x * scale_factor;
+    let sy = -p.z * scale_factor + 25 * scale_factor;
+    
+    // Color based on position
+    let h = (atan2(p.y, p.x) * 180 / PI + 180 + hueShift) % 360;
+    let speed = sqrt(dx*dx + dy*dy + dz*dz) * 200;
+    let bright = min(90, 40 + speed * 50);
+    
+    // Map hue to palette: lavender(270) coral(15) green(140)
+    let mappedH;
+    let hNorm = h / 360;
+    if (hNorm < 0.33) mappedH = lerp(270, 320, hNorm * 3);
+    else if (hNorm < 0.66) mappedH = lerp(5, 25, (hNorm - 0.33) * 3);
+    else mappedH = lerp(130, 170, (hNorm - 0.66) * 3);
+    
+    let sat = lerp(30, 70, speed * 10);
+    
+    stroke(mappedH % 360, sat, bright, 40);
+    strokeWeight(1.2);
+    point(sx, sy);
+    
+    // Glow for fast particles
+    if (speed > 0.3) {
+      stroke(mappedH % 360, 20, 95, 15);
+      strokeWeight(3);
+      point(sx, sy);
+    }
+  }
+  pop();
+}
+
+function mousePressed() {
+  // Reset particles to new starting positions
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles[i].x = random(-1, 1);
+    particles[i].y = random(-1, 1);
+    particles[i].z = random(20, 30);
+    particles[i].birth = frameCount + i * 0.3;
+  }
+  background(0, 0, 4);
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  scale_factor = min(width, height) / 55;
+  background(0, 0, 4);
+}
+</script>
+</body>
+</html>
